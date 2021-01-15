@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title></title>
+    <style type="text/css">
+        body {
+            font-family: Arial;
+            font-size: 10pt;
+        }
+
+        table {
+            border: 1px solid #ccc;
+            border-collapse: collapse;
+        }
+
+        table td {
+            padding: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="text/javascript">
+
+        let mainarray = [];// result array
+
+        // csv download 
+        function arrayToCSV(twoDiArray) {
+
+            var csvRows = [];
+
+            for (var i = 0; i < twoDiArray.length; ++i) {
+                for (var j = 0; j < twoDiArray[i].length; ++j) {
+
+                    twoDiArray[i][j] = '\"' + twoDiArray[i][j] + '\"';
+                }
+                csvRows.push(twoDiArray[i].join(','));
+            }
+
+            var csvString = csvRows.join('\r\n');
+            var a = document.createElement('a');
+            a.href = 'data:attachment/csv,' + csvString;
+            a.target = '_blank';
+            a.download = 'output.csv';
+
+            document.body.appendChild(a);
+            a.click();
+
+        }
+        // csv upload and finding  out the result
+        function Upload() {
+            let fileUpload = document.getElementById("fileUpload");
+            let regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
+            let vertices = [];
+            let name = [];
+            let edges = [];
+            let matrix = [];
+            let date = [];
+
+            if (regex.test(fileUpload.value.toLowerCase())) {
+                if (typeof (FileReader) != "undefined") {
+                    let reader = new FileReader();
+                    reader.onload = function (e) {
+                        let table = document.createElement("table");  //// Making html table
+                        let rows = e.target.result.split("\n");
+                        for (let i = 0; i < rows.length; i++) {
+                            let cells = rows[i].split(",");
+                            if (cells.length > 1) {
+                                let row = table.insertRow(-1);
+                                for (let j = 0; j < cells.length; j++) {
+                                    let cell = row.insertCell(-1);
+                                    cell.innerHTML = cells[j];
+
+                                    if (j == 2) {
+                                        vertices.push(cells[j]);
+                                    }
+                                    if (j == 1) {
+                                        edges.push(cells[j]);;
+                                    }
+                                    if (j == 3) {
+                                        name.push(cells[j]);
+                                    }
+                                    if (j == 0) {
+                                        date.push(cells[j]);
+                                    }
+                                }
+                            }
+                        }
+                        for (let i = 0; i < vertices.length; i++) {
+                            matrix.push([date[i], vertices[i], edges[i], name[i]]);
+
+                        }
+                        matrix.sort(sort);
+
+                        function sort(a, b) {
+                            if (a[2] === b[2]) {
+                                return 0;
+                            } else {
+                                return (a[2] < b[2]) ? -1 : 1;
+                            }
+                        }
+                        matrix.sort(finalsort);
+
+                        function finalsort(a, b) {
+                            if (a[0] === b[0]) {
+                                return 0;
+                            }
+                            else {
+                                return (a[0] < b[0]) ? -1 : 1;
+                            }
+                        }
+                        matrix.splice(matrix.length - 1, matrix.length);
+                        let array = [];
+                        let copyMatrix = [];
+                        copyMatrix = [...matrix];
+
+                        let firstIndex = copyMatrix[0][0];
+                        let matchIndex;
+
+                        while (true) {
+                            array = copyMatrix.filter((el) => {
+                                matchIndex = el[0];
+                                return firstIndex === matchIndex;
+                            });
+                            let index = array.length;
+                            for (let i = 0; i < array.length - 1; i++) {
+                                for (let j = i + 1; j < array.length; j++) {
+                                    if (array[i][2] === array[j][2]) {
+                                        mainarray.push([array[i][3], array[j][3]]); //storing result 
+                                    }
+                                }
+                            }
+                            copyMatrix.splice(0, index);
+                            if (copyMatrix.length === 0) {
+                                break;
+                            }
+                            firstIndex = copyMatrix[0][0];
+                        }
+
+                        mainarray.unshift(["node1", "node2"]);
+
+                        arrayToCSV(mainarray);
+                        let dvCSV = document.getElementById("dvCSV");
+                        dvCSV.innerHTML = "";
+                        dvCSV.appendChild(table);
+                    }
+                    reader.readAsText(fileUpload.files[0]);
+                } else {
+                    alert("This browser does not support HTML5.");
+                }
+            } else {
+                alert("Please upload a valid CSV file.");
+            }
+
+        }
+    </script>
+
+
+    <input type="file" id="fileUpload" />
+    <input type="button" id="upload" value="Upload" onclick="Upload()" />
+    <hr />
+    <h1>Basic Csv Table</h1>
+
+    <div id="dvCSV">
+    </div>
+</body>
+
+</html>
